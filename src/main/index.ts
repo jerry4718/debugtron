@@ -105,9 +105,9 @@ if (!gotTheLock) {
           label: 'About',
           submenu: [
             {
-              label: 'Source Code(jerry4718/jerry4718)',
+              label: 'Source Code(jerry4718/0.5.1-jerry4718)',
               click() {
-                shell.openExternal('https://github.com/jerry4718/debugtron/tree/jerry4718')
+                shell.openExternal('https://github.com/jerry4718/debugtron/tree/0.5.1-jerry4718')
               },
             },
             {
