@@ -1,7 +1,7 @@
 {
   "name": "debugtron",
   "productName": "debugtron",
-  "version": "0.5.0",
+  "version": "0.5.1-jerry4718",
   "description": "Debug in-production Electron based App",
   "main": ".webpack/main",
   "repository": "bytedance/debugtron",
@@ -9,11 +9,9 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "make:deb": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "npx prettier --check src/**/*.{ts,tsx,js,jsx}",
-    "lint-fix": "npx prettier --write src/**/*.{ts,tsx,js,jsx}",
-    "test:find-icon": "ts-node --swc ./src/main/linux/find-icon.ts"
+    "lint-fix": "npx prettier --write src/**/*.{ts,tsx,js,jsx}"
   },
   "keywords": [],
   "author": "Rongjian Zhang <pd4d10@gmail.com>",

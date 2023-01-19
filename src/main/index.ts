@@ -105,6 +105,18 @@ if (!gotTheLock) {
           label: 'About',
           submenu: [
             {
+              label: 'Source Code(jerry4718/jerry4718)',
+              click() {
+                shell.openExternal('https://github.com/jerry4718/debugtron/tree/jerry4718')
+              },
+            },
+            {
+              label: 'Source Code(jerry4718)',
+              click() {
+                shell.openExternal('https://github.com/jerry4718/debugtron')
+              },
+            },
+            {
               label: 'Source Code',
               click() {
                 shell.openExternal('https://github.com/bytedance/debugtron')
