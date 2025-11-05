@@ -1,9 +1,10 @@
-import { Button, Divider, HTMLTable, Tab, Tabs, Tag } from "@blueprintjs/core";
+import { Button, HTMLTable, Tab, Tabs, Tag, Callout } from "@blueprintjs/core";
 import { type FC, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { appSlice } from "../reducers/app";
 import { sessionSlice } from "../reducers/session";
+import { targetSlice } from "../reducers/target";
 
 import { Xterm } from "./xterm";
 
@@ -11,6 +12,7 @@ export const Session: FC = () => {
   const [activeId, setActiveId] = useState("");
   const appStore = useSelector(appSlice.selectSlice);
   const sessionStore = useSelector(sessionSlice.selectSlice);
+  const targetStore = useSelector(targetSlice.selectSlice);
 
   useEffect(() => {
     const sessionIds = Object.keys(sessionStore);
@@ -30,28 +32,64 @@ export const Session: FC = () => {
     >
       {Object.entries(sessionStore).map(([id, session]) => {
         const appInfo = appStore[session.appId];
+        const targetInfo = targetStore[session.targetId];
+
+        // Create tab title with device name
+        const tabTitle = appInfo
+          ? `${appInfo.name} (${targetInfo?.name ?? "Unknown"})`
+          : "Unknown App";
 
         return (
           <Tab
             style={{ overflowY: "auto" }}
             id={id}
             key={id}
-            title={appInfo?.name}
+            title={tabTitle}
             panel={
               <div
                 style={{
                   display: "flex",
-                  marginTop: -20,
-                  overflow: "auto",
-                  maxHeight: "calc(100vh - 100px)", // TODO:
+                  flexDirection: "column",
+                  height: "100%",
+                  overflow: "hidden",
                 }}
               >
-                <div style={{ marginTop: 5, overflow: "auto", flexShrink: 0 }}>
-                  <HTMLTable compact interactive>
+                {/* Connection Info */}
+                {targetInfo && (
+                  <Callout
+                    intent={session.connection.type === "local-process" ? "none" : "primary"}
+                    style={{ margin: "10px 16px", flexShrink: 0 }}
+                  >
+                    <strong>Target:</strong> {targetInfo.name} ({session.connection.type})
+                    {session.connection.websocketUrl && (
+                      <div style={{ marginTop: 5, fontSize: "0.9em", color: "#666" }}>
+                        WebSocket: {session.connection.websocketUrl}
+                      </div>
+                    )}
+                    {session.connection.nodePort && (
+                      <div style={{ marginTop: 5, fontSize: "0.9em", color: "#666" }}>
+                        Node Port: {session.connection.nodePort} | Renderer Port: {session.connection.windowPort}
+                      </div>
+                    )}
+                  </Callout>
+                )}
+
+                {/* Top: Process Table */}
+                <div
+                  style={{
+                    height: "40%",
+                    minHeight: 200,
+                    overflow: "auto",
+                    padding: "0 16px",
+                    borderBottom: "1px solid var(--bp5-divider-black)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <HTMLTable compact interactive style={{ width: "100%" }}>
                     <thead>
                       <tr>
                         <th>Type</th>
-                        <th style={{ minWidth: 160, maxWidth: 160 }}>Title</th>
+                        <th>Title</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -71,9 +109,10 @@ export const Session: FC = () => {
                           </td>
                           <td
                             style={{
-                              minWidth: 160,
-                              maxWidth: 160,
-                              wordWrap: "break-word",
+                              maxWidth: 300,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
                             }}
                           >
                             {page.title}
@@ -104,12 +143,14 @@ export const Session: FC = () => {
                     </tbody>
                   </HTMLTable>
                 </div>
-                <Divider />
+
+                {/* Bottom: Console Output */}
                 <div
                   style={{
-                    marginTop: 5,
-                    flexGrow: 1,
+                    flex: 1,
                     overflow: "auto",
+                    padding: "10px 16px",
+                    minHeight: 0,
                   }}
                 >
                   <Xterm

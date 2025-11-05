@@ -41,6 +41,11 @@ const debugtronAPI = {
   debug: createIPCSender("debug"),
   debugPath: createIPCSender("debug-path"),
 
+  // Remote device operations
+  addRemoteDevice: createIPCSender("add-remote-device"),
+  removeDevice: createIPCSender("remove-device"),
+  refreshDeviceApps: createIPCSender("refresh-device-apps"),
+
   // DevTools operations
   openDevTools: createIPCSender("open-devtools"),
 

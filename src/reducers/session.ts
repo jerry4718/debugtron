@@ -11,10 +11,22 @@ export interface PageInfo {
 
 export interface SessionInfo {
   appId: string;
+  targetId: string; // New: which target this session belongs to
   page: Record<string, PageInfo>;
   log: string;
-  nodePort: number;
-  windowPort: number;
+
+  // Connection details (flexible for different target types)
+  connection: {
+    type: "local-process" | "remote-adb" | "remote-websocket";
+    nodePort?: number;
+    windowPort?: number;
+    websocketUrl?: string;
+    debugUrls?: string[];
+  };
+
+  // Legacy fields for backward compatibility (deprecated)
+  nodePort?: number;
+  windowPort?: number;
 }
 
 export const sessionSlice = createSlice({
@@ -28,11 +40,24 @@ export const sessionSlice = createSlice({
       }: PayloadAction<{
         sessionId: string;
         appId: string;
-        nodePort: number;
-        windowPort: number;
+        targetId: string;
+        connection: {
+          type: "local-process" | "remote-adb" | "remote-websocket";
+          nodePort?: number;
+          windowPort?: number;
+          websocketUrl?: string;
+          debugUrls?: string[];
+        };
       }>,
     ) => {
-      state[sessionId] = { ...rest, page: {}, log: "" };
+      state[sessionId] = {
+        ...rest,
+        page: {},
+        log: "",
+        // Legacy fields for backward compatibility
+        nodePort: rest.connection.nodePort,
+        windowPort: rest.connection.windowPort,
+      };
     },
     pageUpdated: (state, { payload }: PayloadAction<PageInfo[][]>) => {
       Object.keys(state).forEach((sessionId, i) => {

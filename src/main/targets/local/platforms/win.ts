@@ -11,15 +11,13 @@ import {
 } from "registry-js";
 import { Result } from "ts-results";
 
-import type { AppInfo } from "../../reducers/app";
-
-import type { AppReader } from "./utils";
+import type { AppReader, BaseAppInfo } from "./utils";
 
 async function getAppInfoByExePath(
   exePath: string,
   iconPath: string,
   values: readonly RegistryValue[],
-): Promise<AppInfo> {
+): Promise<BaseAppInfo> {
   const displayName = values.find(
     (v): v is RegistryStringEntry => v.type === RegistryValueType.REG_SZ && v.name === "DisplayName",
   );

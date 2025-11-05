@@ -8,8 +8,9 @@ import { app, BrowserWindow, ipcMain, Menu, MenuItem, nativeImage, shell } from 
 
 import type { AppInfo } from "./reducers/app";
 
-import { debug, debugPath, init } from "./main/actions";
+import { addRemoteDevice, debug, debugPath, init, refreshDeviceApps, removeDevice } from "./main/actions";
 import { store } from "./main/store";
+import type { RemoteDeviceOptions } from "./main/targets/types";
 import { setReporter, setUpdater } from "./main/utils";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -110,6 +111,24 @@ if (!gotTheLock) {
       store.dispatch(
         // @ts-expect-error - Redux thunk action dispatch
         debugPath(path),
+      );
+    });
+    ipcMain.on("add-remote-device", (_, options: RemoteDeviceOptions) => {
+      store.dispatch(
+        // @ts-expect-error - Redux thunk action dispatch
+        addRemoteDevice(options),
+      );
+    });
+    ipcMain.on("remove-device", (_, targetId: string) => {
+      store.dispatch(
+        // @ts-expect-error - Redux thunk action dispatch
+        removeDevice(targetId),
+      );
+    });
+    ipcMain.on("refresh-device-apps", (_, targetId: string) => {
+      store.dispatch(
+        // @ts-expect-error - Redux thunk action dispatch
+        refreshDeviceApps(targetId),
       );
     });
     ipcMain.on("open-devtools", (_, url: string) => {

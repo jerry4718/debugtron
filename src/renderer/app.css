@@ -3,14 +3,64 @@ body {
   user-select: none;
 }
 
+/* App item hover effects in device panel */
 @media (prefers-color-scheme: dark) {
   .hoverable:hover {
     background-color: #394b59;
+  }
+
+  .app-item:hover {
+    background-color: #30404d !important;
   }
 }
 
 @media (prefers-color-scheme: light) {
   .hoverable:hover {
     background-color: #eeeeee;
+  }
+
+  .app-item:hover {
+    background-color: #f5f8fa !important;
+  }
+}
+
+/* Smooth transitions for interactive elements */
+.app-item {
+  transition: background-color 0.2s ease;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #30404d;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #5c7080;
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #738694;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  ::-webkit-scrollbar-track {
+    background: #f5f8fa;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #d8e1e8;
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #c1ccd6;
   }
 }
