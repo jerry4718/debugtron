@@ -9,7 +9,7 @@ export const Xterm: FC<{ content: string; options?: ITerminalOptions }> = ({
   options,
 }) => {
   const domRef = useRef<HTMLDivElement>(null);
-  const termRef = useRef<Terminal>();
+  const termRef = useRef<Terminal | null>(null);
 
   useEffect(() => {
     const term = new Terminal(options);
