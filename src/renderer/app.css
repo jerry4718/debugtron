@@ -1,32 +1,79 @@
-body {
-  height: 100vh;
-  user-select: none;
+@import "tailwindcss";
+
+@source "../**/*.{ts,tsx}";
+
+/* Define color variables directly on :root for light mode */
+:root {
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #f8fafc;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #1e293b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #1e293b;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #3b82f6;
+
+  /* Scrollbar colors */
+  --scrollbar-track: #f5f8fa;
+  --scrollbar-thumb: #d8e1e8;
+  --scrollbar-thumb-hover: #c1ccd6;
 }
 
-/* App item hover effects in device panel */
+/* Override for dark mode */
 @media (prefers-color-scheme: dark) {
-  .hoverable:hover {
-    background-color: #394b59;
-  }
+  :root {
+    --color-background: #0f172a;
+    --color-foreground: #f8fafc;
+    --color-muted: #1e293b;
+    --color-muted-foreground: #94a3b8;
+    --color-primary: #3b82f6;
+    --color-primary-foreground: #1e293b;
+    --color-secondary: #1e293b;
+    --color-secondary-foreground: #f8fafc;
+    --color-accent: #1e293b;
+    --color-accent-foreground: #f8fafc;
+    --color-border: #1e293b;
+    --color-input: #1e293b;
+    --color-ring: #3b82f6;
 
-  .app-item:hover {
-    background-color: #30404d !important;
+    /* Scrollbar colors */
+    --scrollbar-track: #30404d;
+    --scrollbar-thumb: #5c7080;
+    --scrollbar-thumb-hover: #738694;
   }
 }
 
-@media (prefers-color-scheme: light) {
-  .hoverable:hover {
-    background-color: #eeeeee;
-  }
-
-  .app-item:hover {
-    background-color: #f5f8fa !important;
-  }
+/* Tell Tailwind to use our custom color variables */
+@theme {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-border: var(--color-border);
+  --color-input: var(--color-input);
+  --color-ring: var(--color-ring);
 }
 
-/* Smooth transitions for interactive elements */
-.app-item {
-  transition: background-color 0.2s ease;
+html,
+body,
+#root {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }
 
 /* Custom scrollbar styles */
@@ -35,32 +82,15 @@ body {
   height: 10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-track {
-    background: #30404d;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #5c7080;
-    border-radius: 5px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #738694;
-  }
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
 }
 
-@media (prefers-color-scheme: light) {
-  ::-webkit-scrollbar-track {
-    background: #f5f8fa;
-  }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 5px;
+}
 
-  ::-webkit-scrollbar-thumb {
-    background: #d8e1e8;
-    border-radius: 5px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #c1ccd6;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }

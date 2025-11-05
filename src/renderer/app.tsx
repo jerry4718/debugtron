@@ -2,10 +2,10 @@ import { sessionSlice } from "../reducers/session";
 import { targetSlice } from "../reducers/target";
 
 import "./app.css";
-import { Colors, Dialog, FormGroup, InputGroup, Radio, RadioGroup, Button } from "@blueprintjs/core";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as RadioGroup from "@radix-ui/react-radio-group";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useMedia } from "react-use";
 
 import { DeviceDetailsDialog } from "./device-details-dialog";
 import { DevicePanel } from "./device-panel";
@@ -13,7 +13,6 @@ import { DeviceSidebar } from "./device-sidebar";
 import { Session } from "./session";
 
 export const App: React.FC = () => {
-  const darkMode = useMedia("(prefers-color-scheme: dark)");
   const sessionStore = useSelector(sessionSlice.selectSlice);
   const targetStore = useSelector(targetSlice.selectSlice);
 
@@ -53,36 +52,20 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: darkMode ? Colors.DARK_GRAY2 : undefined,
-      }}
-      className={darkMode ? "bp5-dark" : undefined}
-    >
+    <div className="h-screen flex flex-col bg-background">
       {/* Draggable Title Bar */}
       <div
+        className="h-10 flex items-center justify-center border-b border-border bg-background text-sm font-medium text-foreground"
         style={{
-          height: 40,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderBottom: "1px solid var(--bp5-divider-black)",
-          backgroundColor: "var(--bp5-background-color)",
           // @ts-expect-error - Non-standard property
           WebkitAppRegion: "drag",
-          fontSize: 14,
-          fontWeight: 500,
-          color: "var(--bp5-text-color)",
         }}
       >
         Debugtron
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Device List */}
         <DeviceSidebar
           selectedDeviceId={selectedDeviceId}
@@ -97,15 +80,7 @@ export const App: React.FC = () => {
         />
 
         {/* Middle: App List - Always shows apps for selected device */}
-        <div
-          style={{
-            width: 300,
-            display: "flex",
-            flexDirection: "column",
-            borderRight: "1px solid var(--bp5-divider-black)",
-            overflow: "hidden",
-          }}
-        >
+        <div className="w-[300px] flex flex-col border-r border-border overflow-hidden">
           <DevicePanel
             selectedDeviceId={selectedDeviceId}
             onDeviceSettings={() => {
@@ -120,28 +95,12 @@ export const App: React.FC = () => {
         {/* Right: Session Details - Shows debugging sessions */}
         {Object.keys(sessionStore).length > 0
           ? (
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-              }}
-            >
+            <div className="flex-1 flex flex-col overflow-hidden">
               <Session />
             </div>
           )
           : (
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--bp5-text-color-muted)",
-                fontSize: 16,
-              }}
-            >
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-base">
               Select an app to start debugging
             </div>
           )}
@@ -170,69 +129,109 @@ export const App: React.FC = () => {
       />
 
       {/* Add Remote Device Dialog */}
-      <Dialog
-        isOpen={addDeviceOpen}
-        onClose={() => {
-          setAddDeviceOpen(false);
-        }}
-        title="Add Remote Device"
-      >
-        <div className="bp5-dialog-body">
-          <FormGroup label="Device Type" labelFor="device-type">
-            <RadioGroup
-              id="device-type"
-              selectedValue={deviceType}
-              onChange={(e) => {
-                setDeviceType(e.currentTarget.value as "adb" | "ssh" | "websocket");
-              }}
-            >
-              <Radio label="ADB (Android Debug Bridge)" value="adb" />
-              <Radio label="SSH (Coming soon)" value="ssh" disabled />
-              <Radio label="WebSocket (Coming soon)" value="websocket" disabled />
-            </RadioGroup>
-          </FormGroup>
+      <Dialog.Root open={addDeviceOpen} onOpenChange={setAddDeviceOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border border-border rounded-lg shadow-lg w-[500px] max-w-[90vw] max-h-[85vh] overflow-auto">
+            <Dialog.Title className="text-lg font-semibold px-6 pt-6 pb-4 border-b border-border">
+              Add Remote Device
+            </Dialog.Title>
 
-          <FormGroup label="Device Address" labelFor="device-address">
-            <InputGroup
-              id="device-address"
-              placeholder="e.g., 192.168.1.100"
-              value={deviceAddress}
-              onChange={(e) => {
-                setDeviceAddress(e.target.value);
-              }}
-            />
-          </FormGroup>
+            <div className="px-6 py-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Device Type</label>
+                <RadioGroup.Root
+                  value={deviceType}
+                  onValueChange={(value) => {
+                    setDeviceType(value as "adb" | "ssh" | "websocket");
+                  }}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroup.Item
+                      value="adb"
+                      className="w-4 h-4 rounded-full border border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    >
+                      <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-2 after:h-2 after:rounded-full after:bg-white" />
+                    </RadioGroup.Item>
+                    <label className="text-sm">ADB (Android Debug Bridge)</label>
+                  </div>
+                  <div className="flex items-center space-x-2 opacity-50">
+                    <RadioGroup.Item
+                      value="ssh"
+                      disabled
+                      className="w-4 h-4 rounded-full border border-muted"
+                    >
+                      <RadioGroup.Indicator />
+                    </RadioGroup.Item>
+                    <label className="text-sm">SSH (Coming soon)</label>
+                  </div>
+                  <div className="flex items-center space-x-2 opacity-50">
+                    <RadioGroup.Item
+                      value="websocket"
+                      disabled
+                      className="w-4 h-4 rounded-full border border-muted"
+                    >
+                      <RadioGroup.Indicator />
+                    </RadioGroup.Item>
+                    <label className="text-sm">WebSocket (Coming soon)</label>
+                  </div>
+                </RadioGroup.Root>
+              </div>
 
-          <FormGroup label="Port" labelFor="device-port">
-            <InputGroup
-              id="device-port"
-              placeholder="5555"
-              value={devicePort}
-              onChange={(e) => {
-                setDevicePort(e.target.value);
-              }}
-            />
-          </FormGroup>
-        </div>
-        <div className="bp5-dialog-footer">
-          <div className="bp5-dialog-footer-actions">
-            <Button
-              onClick={() => {
-                setAddDeviceOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              intent="primary"
-              onClick={handleAddDevice}
-              disabled={!deviceAddress}
-            >
-              Connect
-            </Button>
-          </div>
-        </div>
-      </Dialog>
+              <div className="space-y-2">
+                <label htmlFor="device-address" className="text-sm font-medium text-foreground">
+                  Device Address
+                </label>
+                <input
+                  id="device-address"
+                  type="text"
+                  placeholder="e.g., 192.168.1.100"
+                  value={deviceAddress}
+                  onChange={(e) => {
+                    setDeviceAddress(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="device-port" className="text-sm font-medium text-foreground">
+                  Port
+                </label>
+                <input
+                  id="device-port"
+                  type="text"
+                  placeholder="5555"
+                  value={devicePort}
+                  onChange={(e) => {
+                    setDevicePort(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setAddDeviceOpen(false);
+                }}
+                className="px-4 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddDevice}
+                disabled={!deviceAddress}
+                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Connect
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 };

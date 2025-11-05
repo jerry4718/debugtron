@@ -1,4 +1,3 @@
-import { Button, ControlGroup, InputGroup, Tooltip } from "@blueprintjs/core";
 import { type FC, useState } from "react";
 import { useSelector } from "react-redux";
 
@@ -29,99 +28,70 @@ export const DevicePanel: FC<DevicePanelProps> = ({
 
   if (!device) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--bp5-text-color-muted)",
-          fontSize: 16,
-        }}
-      >
+      <div className="flex-1 flex items-center justify-center text-muted-foreground text-base">
         Select a device to view apps
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Device Header */}
       <div
+        className="px-4 py-2.5 border-b border-border bg-background flex items-center justify-between"
         style={{
-          padding: "10px 16px",
-          borderBottom: "1px solid var(--bp5-divider-black)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          backgroundColor: "var(--bp5-background-color)",
           // @ts-expect-error - Non-standard property
           WebkitAppRegion: "no-drag",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 20 }}>
+        <div className="flex items-center gap-3">
+          <span className="text-xl">
             {device.type === "local" ? "💻" : "🌐"}
           </span>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>
+            <div className="text-base font-semibold">
               {device.name}
             </div>
-            <div style={{ fontSize: 12, color: "var(--bp5-text-color-muted)" }}>
+            <div className="text-xs text-muted-foreground">
               {deviceApps.length} app{deviceApps.length !== 1 ? "s" : ""} found
             </div>
           </div>
         </div>
-        <Button
-          variant="minimal"
-          icon="cog"
+        <button
           onClick={onDeviceSettings}
-        />
+          className="p-2 rounded hover:bg-accent transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+              stroke="currentColor"
+              strokeWidth="1"
+              fill="none"
+            />
+            <path
+              d="M14 8a6 6 0 1 1-12 0 6 6 0 0 1 12 0z"
+              stroke="currentColor"
+              strokeWidth="1"
+              fill="none"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* App List */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "0 16px 16px",
-        }}
-      >
+      <div className="flex-1 overflow-y-auto p-4">
         {deviceApps.length === 0
           ? (
-            <div
-              style={{
-                textAlign: "center",
-                color: "var(--bp5-text-color-muted)",
-                padding: "40px 20px",
-              }}
-            >
+            <div className="text-center text-muted-foreground py-10 px-5">
               No apps found on this device
             </div>
           )
           : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {deviceApps.map((app) => (
                 <div
                   key={app.id}
-                  style={{
-                    padding: 12,
-                    border: "1px solid var(--bp5-divider-black)",
-                    borderRadius: 4,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    cursor: "pointer",
-                    transition: "background-color 0.2s",
-                  }}
-                  className="app-item"
+                  className="p-3 border border-border rounded hover:bg-accent/50 transition-colors cursor-pointer flex items-center gap-3"
                   onClick={() => {
                     window.debugtronAPI.debug(app);
                   }}
@@ -129,42 +99,30 @@ export const DevicePanel: FC<DevicePanelProps> = ({
                   <img
                     src={app.icon || defaultImage}
                     alt=""
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 4,
-                    }}
+                    className="w-8 h-8 rounded"
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
                       {app.name}
                     </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "var(--bp5-text-color-muted)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <div className="text-xs text-muted-foreground truncate">
                       {app.metadata?.packageName ?? app.id.split(":").pop()}
                     </div>
                   </div>
-                  <Button
-                    size="small"
-                    icon="play"
-                    intent="primary"
+                  <button
+                    className="p-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                     title="Debug this app"
-                  />
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M3 2l6 4-6 4V2z" fill="currentColor" />
+                    </svg>
+                  </button>
                 </div>
               ))}
             </div>
@@ -174,32 +132,35 @@ export const DevicePanel: FC<DevicePanelProps> = ({
       {/* Custom Path Input (for local devices) */}
       {device.type === "local" && (
         <div
+          className="p-4 border-t border-border bg-background"
           style={{
-            padding: 16,
-            borderTop: "1px solid var(--bp5-divider-black)",
-            backgroundColor: "var(--bp5-background-color)",
             // @ts-expect-error - Non-standard property
             WebkitAppRegion: "no-drag",
           }}
         >
-          <ControlGroup fill>
-            <Tooltip content="Input custom path here and click Debug">
-              <InputGroup
-                value={input}
-                placeholder="App not found? Enter custom path..."
-                onChange={(e) => {
-                  setInput(e.target.value);
-                }}
-              />
-            </Tooltip>
-            <Button
-              text="Debug"
-              icon="build"
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              placeholder="App not found? Enter custom path..."
+              onChange={(e) => {
+                setInput(e.target.value);
+              }}
+              className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              title="Input custom path here and click Debug"
+            />
+            <button
               onClick={() => {
                 window.debugtronAPI.debugPath(input);
               }}
-            />
-          </ControlGroup>
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 2l6 4-6 4V2z" fill="currentColor" />
+              </svg>
+              Debug
+            </button>
+          </div>
         </div>
       )}
     </div>

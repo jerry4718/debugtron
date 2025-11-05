@@ -1,10 +1,11 @@
-import { Button, HTMLTable, Tab, Tabs, Tag, Callout } from "@blueprintjs/core";
+import * as Tabs from "@radix-ui/react-tabs";
 import { type FC, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { appSlice } from "../reducers/app";
 import { sessionSlice } from "../reducers/session";
 import { targetSlice } from "../reducers/target";
+import { cn } from "./lib/utils";
 
 import { Xterm } from "./xterm";
 
@@ -24,148 +25,144 @@ export const Session: FC = () => {
   }, [activeId, sessionStore]);
 
   return (
-    <Tabs
-      selectedTabId={activeId}
-      onChange={(key) => {
-        setActiveId(key as string);
-      }}
-    >
+    <Tabs.Root value={activeId} onValueChange={setActiveId} className="flex flex-col h-full">
+      <Tabs.List className="flex border-b border-border bg-background px-2 gap-1 flex-shrink-0">
+        {Object.entries(sessionStore).map(([id, session]) => {
+          const appInfo = appStore[session.appId];
+          const targetInfo = targetStore[session.targetId];
+
+          const tabTitle = appInfo
+            ? `${appInfo.name} (${targetInfo?.name ?? "Unknown"})`
+            : "Unknown App";
+
+          return (
+            <Tabs.Trigger
+              key={id}
+              value={id}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors border-b-2 border-transparent",
+                "data-[state=active]:border-primary data-[state=active]:text-foreground",
+                "data-[state=inactive]:text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tabTitle}
+            </Tabs.Trigger>
+          );
+        })}
+      </Tabs.List>
+
       {Object.entries(sessionStore).map(([id, session]) => {
-        const appInfo = appStore[session.appId];
         const targetInfo = targetStore[session.targetId];
 
-        // Create tab title with device name
-        const tabTitle = appInfo
-          ? `${appInfo.name} (${targetInfo?.name ?? "Unknown"})`
-          : "Unknown App";
-
         return (
-          <Tab
-            style={{ overflowY: "auto" }}
-            id={id}
+          <Tabs.Content
             key={id}
-            title={tabTitle}
-            panel={
+            value={id}
+            className="flex-1 flex flex-col overflow-hidden"
+          >
+            {/* Connection Info */}
+            {targetInfo && (
               <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  overflow: "hidden",
-                }}
-              >
-                {/* Connection Info */}
-                {targetInfo && (
-                  <Callout
-                    intent={session.connection.type === "local-process" ? "none" : "primary"}
-                    style={{ margin: "10px 16px", flexShrink: 0 }}
-                  >
-                    <strong>Target:</strong> {targetInfo.name} ({session.connection.type})
-                    {session.connection.websocketUrl && (
-                      <div style={{ marginTop: 5, fontSize: "0.9em", color: "#666" }}>
-                        WebSocket: {session.connection.websocketUrl}
-                      </div>
-                    )}
-                    {session.connection.nodePort && (
-                      <div style={{ marginTop: 5, fontSize: "0.9em", color: "#666" }}>
-                        Node Port: {session.connection.nodePort} | Renderer Port: {session.connection.windowPort}
-                      </div>
-                    )}
-                  </Callout>
+                className={cn(
+                  "mx-4 mt-2.5 mb-2 p-3 rounded border",
+                  session.connection.type === "local-process"
+                    ? "bg-muted border-border"
+                    : "bg-primary/10 border-primary/30",
                 )}
-
-                {/* Top: Process Table */}
-                <div
-                  style={{
-                    height: "40%",
-                    minHeight: 200,
-                    overflow: "auto",
-                    padding: "0 16px",
-                    borderBottom: "1px solid var(--bp5-divider-black)",
-                    flexShrink: 0,
-                  }}
-                >
-                  <HTMLTable compact interactive style={{ width: "100%" }}>
-                    <thead>
-                      <tr>
-                        <th>Type</th>
-                        <th>Title</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(session.page).map(([id, page]) => (
-                        <tr key={id}>
-                          <td>
-                            <Tag
-                              intent={page.type === "node"
-                                ? "success"
-                                : page.type === "page"
-                                  ? "primary"
-                                  : "none"}
-                            >
-                              {page.type}
-                            </Tag>
-                          </td>
-                          <td
-                            style={{
-                              maxWidth: 300,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {page.title}
-                          </td>
-                          <td>
-                            <Button
-                              size="small"
-                              endIcon="share"
-                              onClick={() => {
-                                const url = page.devtoolsFrontendUrl
-                                  .replace(
-                                    /^\/devtools/,
-                                    "devtools://devtools/bundled",
-                                  )
-                                  .replace(
-                                    /^chrome-devtools:\/\//,
-                                    "devtools://",
-                                  );
-
-                                window.debugtronAPI.openDevTools(url);
-                              }}
-                            >
-                              Inspect
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </HTMLTable>
+              >
+                <div className="font-semibold text-sm">
+                  Target: {targetInfo.name} ({session.connection.type})
                 </div>
-
-                {/* Bottom: Console Output */}
-                <div
-                  style={{
-                    flex: 1,
-                    overflow: "auto",
-                    padding: "10px 16px",
-                    minHeight: 0,
-                  }}
-                >
-                  <Xterm
-                    content={session.log}
-                    options={{
-                      fontFamily: "SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace",
-                      convertEol: true,
-                    }}
-                  />
-                </div>
+                {session.connection.websocketUrl && (
+                  <div className="mt-1 text-xs text-muted-foreground font-mono">
+                    WebSocket: {session.connection.websocketUrl}
+                  </div>
+                )}
+                {session.connection.nodePort && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Node Port: {session.connection.nodePort} | Renderer Port: {session.connection.windowPort}
+                  </div>
+                )}
               </div>
-            }
-          />
+            )}
+
+            {/* Top: Process Table */}
+            <div className="h-[40%] min-h-[200px] overflow-auto px-4 border-b border-border flex-shrink-0">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-background border-b border-border">
+                  <tr>
+                    <th className="text-left py-2 font-medium">Type</th>
+                    <th className="text-left py-2 font-medium">Title</th>
+                    <th className="text-left py-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(session.page).map(([pageId, page]) => (
+                    <tr key={pageId} className="border-b border-border hover:bg-accent/50">
+                      <td className="py-2">
+                        <span
+                          className={cn(
+                            "inline-block px-2 py-0.5 rounded text-xs font-medium",
+                            page.type === "node"
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                              : page.type === "page"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                : "bg-gray-500/10 text-gray-600 dark:text-gray-400",
+                          )}
+                        >
+                          {page.type}
+                        </span>
+                      </td>
+                      <td className="py-2 max-w-[300px] truncate">
+                        {page.title}
+                      </td>
+                      <td className="py-2">
+                        <button
+                          onClick={() => {
+                            const url = page.devtoolsFrontendUrl
+                              .replace(
+                                /^\/devtools/,
+                                "devtools://devtools/bundled",
+                              )
+                              .replace(
+                                /^chrome-devtools:\/\//,
+                                "devtools://",
+                              );
+
+                            window.debugtronAPI.openDevTools(url);
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded transition-colors flex items-center gap-1.5"
+                        >
+                          Inspect
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M3 3h6M3 6h6M3 9h4"
+                              stroke="currentColor"
+                              strokeWidth="1"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bottom: Console Output */}
+            <div className="flex-1 overflow-auto p-2.5 min-h-0">
+              <Xterm
+                content={session.log}
+                options={{
+                  fontFamily: "SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace",
+                  convertEol: true,
+                }}
+              />
+            </div>
+          </Tabs.Content>
         );
       })}
-    </Tabs>
+    </Tabs.Root>
   );
 };

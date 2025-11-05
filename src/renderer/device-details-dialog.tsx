@@ -1,9 +1,10 @@
-import { Button, Dialog, FormGroup, Tag } from "@blueprintjs/core";
+import * as Dialog from "@radix-ui/react-dialog";
 import { type FC } from "react";
 import { useSelector } from "react-redux";
 
 import { appSlice } from "../reducers/app";
 import { targetSlice } from "../reducers/target";
+import { cn } from "./lib/utils";
 
 interface DeviceDetailsDialogProps {
   isOpen: boolean;
@@ -46,126 +47,128 @@ export const DeviceDetailsDialog: FC<DeviceDetailsDialogProps> = ({
   }
 
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Device Details"
-      style={{ width: 500 }}
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div className="bp5-dialog-body">
-        <FormGroup label="Device Name">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 12px",
-              backgroundColor: "var(--bp5-background-color)",
-              borderRadius: 4,
-            }}
-          >
-            <span style={{ fontSize: 20 }}>
-              {device.type === "local" ? "💻" : "🌐"}
-            </span>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>
-              {device.name}
-            </span>
-          </div>
-        </FormGroup>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border border-border rounded-lg shadow-lg w-[500px] max-w-[90vw] max-h-[85vh] overflow-auto">
+          <Dialog.Title className="text-lg font-semibold px-6 pt-6 pb-4 border-b border-border">
+            Device Details
+          </Dialog.Title>
 
-        <FormGroup label="Type">
-          <Tag
-            size="large"
-            intent={device.type === "local" ? "success" : "primary"}
-          >
-            {device.type === "local" ? "Local Device" : "Remote Device"}
-          </Tag>
-        </FormGroup>
-
-        <FormGroup label="Status">
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                backgroundColor:
-                  device.status === "connected" ? "#0f9960" : "#5c7080",
-                display: "inline-block",
-              }}
-            />
-            <span style={{ fontSize: 14, textTransform: "capitalize" }}>
-              {device.status}
-            </span>
-          </div>
-        </FormGroup>
-
-        {!isLocal && connectionInfo.address && (
-          <>
-            <FormGroup label="Connection">
-              <div
-                style={{
-                  padding: "8px 12px",
-                  backgroundColor: "var(--bp5-background-color)",
-                  borderRadius: 4,
-                  fontFamily: "monospace",
-                  fontSize: 13,
-                }}
-              >
-                {connectionInfo.address}
-                {connectionInfo.port && `:${connectionInfo.port}`}
+          <div className="px-6 py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Device Name</label>
+              <div className="flex items-center gap-2 px-3 py-2 bg-accent rounded">
+                <span className="text-xl">
+                  {device.type === "local" ? "💻" : "🌐"}
+                </span>
+                <span className="text-sm font-medium">
+                  {device.name}
+                </span>
               </div>
-            </FormGroup>
-          </>
-        )}
-
-        <FormGroup label="Apps Discovered">
-          <div
-            style={{
-              fontSize: 24,
-              fontWeight: "bold",
-              color: "var(--bp5-intent-primary)",
-            }}
-          >
-            {deviceApps.length}
-          </div>
-        </FormGroup>
-
-        {device.lastDiscovery && (
-          <FormGroup label="Last Discovery">
-            <div style={{ fontSize: 14, color: "var(--bp5-text-color-muted)" }}>
-              {new Date(device.lastDiscovery).toLocaleString()}
             </div>
-          </FormGroup>
-        )}
-      </div>
 
-      <div className="bp5-dialog-footer">
-        <div className="bp5-dialog-footer-actions">
-          {!isLocal && onRemove && (
-            <Button
-              intent="danger"
-              onClick={() => {
-                onRemove(device.id);
-                onClose();
-              }}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Type</label>
+              <span
+                className={cn(
+                  "inline-block px-3 py-1.5 rounded text-sm font-medium",
+                  device.type === "local"
+                    ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                )}
+              >
+                {device.type === "local" ? "Local Device" : "Remote Device"}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "w-2.5 h-2.5 rounded-full inline-block",
+                    device.status === "connected" ? "bg-green-500" : "bg-gray-500",
+                  )}
+                />
+                <span className="text-sm capitalize">
+                  {device.status}
+                </span>
+              </div>
+            </div>
+
+            {!isLocal && connectionInfo.address && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Connection</label>
+                <div className="px-3 py-2 bg-accent rounded font-mono text-xs">
+                  {connectionInfo.address}
+                  {connectionInfo.port && `:${connectionInfo.port}`}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Apps Discovered</label>
+              <div className="text-2xl font-bold text-primary">
+                {deviceApps.length}
+              </div>
+            </div>
+
+            {device.lastDiscovery && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Last Discovery</label>
+                <div className="text-sm text-muted-foreground">
+                  {new Date(device.lastDiscovery).toLocaleString()}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
+            {!isLocal && onRemove && (
+              <button
+                onClick={() => {
+                  onRemove(device.id);
+                  onClose();
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+              >
+                Remove Device
+              </button>
+            )}
+            {onRefresh && (
+              <button
+                onClick={() => {
+                  onRefresh(device.id);
+                }}
+                className="px-4 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors flex items-center gap-2"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 7A5 5 0 1 1 7 2M7 2V5M7 2L5 4"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Refresh Apps
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors"
             >
-              Remove Device
-            </Button>
-          )}
-          {onRefresh && (
-            <Button
-              icon="refresh"
-              onClick={() => {
-                onRefresh(device.id);
-              }}
-            >
-              Refresh Apps
-            </Button>
-          )}
-          <Button onClick={onClose}>Close</Button>
-        </div>
-      </div>
-    </Dialog>
+              Close
+            </button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };

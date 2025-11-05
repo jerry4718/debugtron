@@ -1,8 +1,8 @@
-import { Button } from "@blueprintjs/core";
 import { type FC, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { targetSlice } from "../reducers/target";
+import { cn } from "./lib/utils";
 
 interface DeviceSidebarProps {
   selectedDeviceId?: string;
@@ -28,30 +28,12 @@ export const DeviceSidebar: FC<DeviceSidebarProps> = ({
   });
 
   return (
-    <div
-      style={{
-        width: 200,
-        backgroundColor: "var(--bp5-background-color)",
-        borderRight: "1px solid var(--bp5-divider-black)",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-      }}
-    >
-      <div
-        style={{
-          padding: "10px 15px",
-          fontWeight: "bold",
-          fontSize: 12,
-          color: "var(--bp5-text-color-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-        }}
-      >
+    <div className="w-[200px] bg-background border-r border-border flex flex-col h-full">
+      <div className="px-4 py-2.5 font-bold text-xs text-muted-foreground uppercase tracking-wide">
         Devices
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div className="flex-1 overflow-y-auto">
         {devices.map((device) => {
           const isSelected = device.id === selectedDeviceId;
           const isHovered = device.id === hoveredDevice;
@@ -60,20 +42,14 @@ export const DeviceSidebar: FC<DeviceSidebarProps> = ({
           return (
             <div
               key={device.id}
-              style={{
-                padding: "10px 15px",
-                cursor: "pointer",
-                backgroundColor: isSelected
-                  ? "#137cbd"
+              className={cn(
+                "px-4 py-2.5 cursor-pointer transition-colors flex items-center justify-between",
+                isSelected
+                  ? "bg-primary text-primary-foreground"
                   : isHovered
-                    ? "var(--bp5-background-color-hover)"
+                    ? "bg-accent"
                     : "transparent",
-                color: isSelected ? "white" : "inherit",
-                transition: "background-color 0.2s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
+              )}
               onClick={() => {
                 onDeviceSelect(device.id);
               }}
@@ -84,54 +60,25 @@ export const DeviceSidebar: FC<DeviceSidebarProps> = ({
                 setHoveredDevice(undefined);
               }}
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{deviceIcon}</span>
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      color: isSelected ? "white" : "inherit",
-                    }}
-                  >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{deviceIcon}</span>
+                  <span className="text-sm font-medium truncate">
                     {device.name}
                   </span>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginTop: 4,
-                    marginLeft: 24,
-                  }}
-                >
+                <div className="flex items-center gap-1.5 mt-1 ml-6">
                   <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor:
-                        device.status === "connected" ? "#0f9960" : "#5c7080",
-                      display: "inline-block",
-                    }}
+                    className={cn(
+                      "w-2 h-2 rounded-full inline-block",
+                      device.status === "connected" ? "bg-green-500" : "bg-gray-500",
+                    )}
                   />
                   <span
-                    style={{
-                      fontSize: 11,
-                      color: isSelected
-                        ? "rgba(255, 255, 255, 0.8)"
-                        : "var(--bp5-text-color-muted)",
-                    }}
+                    className={cn(
+                      "text-[11px]",
+                      isSelected ? "text-primary-foreground/80" : "text-muted-foreground",
+                    )}
                   >
                     {device.status}
                   </span>
@@ -139,18 +86,29 @@ export const DeviceSidebar: FC<DeviceSidebarProps> = ({
               </div>
 
               {isHovered && (
-                <Button
-                  variant="minimal"
-                  size="small"
-                  icon="info-sign"
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeviceDetails(device.id);
                   }}
-                  style={{
-                    color: isSelected ? "white" : "inherit",
-                  }}
-                />
+                  className={cn(
+                    "p-1.5 rounded hover:bg-accent/50 transition-colors",
+                    isSelected && "hover:bg-primary-foreground/20",
+                  )}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                  >
+                    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1" fill="none" />
+                    <circle cx="8" cy="5.5" r="0.5" fill="currentColor" />
+                    <path d="M8 7v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                </button>
               )}
             </div>
           );
@@ -158,19 +116,21 @@ export const DeviceSidebar: FC<DeviceSidebarProps> = ({
       </div>
 
       <div
+        className="p-2.5 border-t border-border"
         style={{
-          padding: 10,
-          borderTop: "1px solid var(--bp5-divider-black)",
           // @ts-expect-error - Non-standard property
           WebkitAppRegion: "no-drag",
         }}
       >
-        <Button
-          fill
-          icon="add"
-          text="Add Device"
+        <button
           onClick={onAddDevice}
-        />
+          className="w-full px-4 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 rounded-md transition-colors flex items-center justify-center gap-2"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          Add Device
+        </button>
       </div>
     </div>
   );
