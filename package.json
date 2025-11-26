@@ -68,7 +68,6 @@
     "redux": "^5.0.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.16",
-    "ts-results": "^3.3.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "universal-analytics": "^0.5.3",

@@ -1,5 +1,4 @@
 import type { ChildProcess } from "child_process";
-import type { Result } from "ts-results";
 
 import type { AppInfo } from "../../reducers/target";
 
@@ -29,10 +28,10 @@ export interface TargetAdapter {
   name: string;
 
   // Discovery
-  discoverApps(): Promise<Result<AppInfo[], Error>>;
+  discoverApps(): Promise<AppInfo[]>;
 
   // Launch & Connect
-  launch(app: AppInfo, options: LaunchOptions): Promise<Result<DebugConnection, Error>>;
+  launch(app: AppInfo, options: LaunchOptions): Promise<DebugConnection>;
 
   // Connection management
   disconnect(connectionId: string): Promise<void>;

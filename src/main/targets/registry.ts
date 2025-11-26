@@ -1,5 +1,3 @@
-import { Result } from "ts-results";
-
 import type { RemoteDeviceOptions, TargetAdapter, TargetInfo } from "./types";
 
 export class TargetRegistry {
@@ -40,32 +38,30 @@ export class TargetRegistry {
 
   async addRemoteDevice(
     options: RemoteDeviceOptions,
-  ): Promise<Result<TargetAdapter, Error>> {
-    return Result.wrapAsync(async () => {
-      let adapter: TargetAdapter;
+  ): Promise<TargetAdapter> {
+    let adapter: TargetAdapter;
 
-      switch (options.type) {
-        case "adb": {
-          const { AdbTargetAdapter } = await import("./remote/adb");
-          adapter = new AdbTargetAdapter(options.address, options.port);
-          break;
-        }
-        case "ssh":
-        case "websocket":
-          throw new Error(`Target type ${options.type} not yet implemented`);
-        default:
-          throw new Error(`Unknown target type: ${options.type}`);
+    switch (options.type) {
+      case "adb": {
+        const { AdbTargetAdapter } = await import("./remote/adb");
+        adapter = new AdbTargetAdapter(options.address, options.port);
+        break;
       }
+      case "ssh":
+      case "websocket":
+        throw new Error(`Target type ${options.type} not yet implemented`);
+      default:
+        throw new Error(`Unknown target type: ${options.type}`);
+    }
 
-      // Check if device is available before registering
-      const isAvailable = await adapter.isAvailable();
-      if (!isAvailable) {
-        throw new Error(`Device at ${options.address} is not available`);
-      }
+    // Check if device is available before registering
+    const isAvailable = await adapter.isAvailable();
+    if (!isAvailable) {
+      throw new Error(`Device at ${options.address} is not available`);
+    }
 
-      this.register(adapter);
-      return adapter;
-    });
+    this.register(adapter);
+    return adapter;
   }
 }
 

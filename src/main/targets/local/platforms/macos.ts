@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 
 import plist from "simple-plist";
-import { Result } from "ts-results";
 
 import type { AppReader } from "./utils";
 
@@ -56,32 +55,32 @@ async function readIcnsAsImageUri(file: string) {
 }
 
 export const adapter: AppReader = {
-  readAll: () =>
-    Result.wrapAsync(async () => {
-      const dir = "/Applications";
-      const appPaths = await fs.promises.readdir(dir);
-      const apps = await Promise.all(
-        appPaths.map((p) => adapter.readByPath(path.join(dir, p))),
-      );
-      return apps.flatMap((app) => (app.ok ? [app.unwrap()] : []));
-    }),
-  readByPath: (p: string) =>
-    Result.wrapAsync(async () => {
-      const isElectronBased = fs.existsSync(
-        path.join(p, "Contents/Frameworks/Electron Framework.framework"),
-      );
-      if (!isElectronBased) throw new Error("Not an electron app");
+  readAll: async () => {
+    const dir = "/Applications";
+    const appPaths = await fs.promises.readdir(dir);
+    const results = await Promise.allSettled(
+      appPaths.map((p) => adapter.readByPath(path.join(dir, p))),
+    );
+    return results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : [],
+    );
+  },
+  readByPath: async (p: string) => {
+    const isElectronBased = fs.existsSync(
+      path.join(p, "Contents/Frameworks/Electron Framework.framework"),
+    );
+    if (!isElectronBased) throw new Error("Not an electron app");
 
-      const info = await readPlistFile(path.join(p, "Contents/Info.plist"));
-      const icon = await readIcnsAsImageUri(
-        path.join(p, "Contents/Resources", info.CFBundleIconFile),
-      );
+    const info = await readPlistFile(path.join(p, "Contents/Info.plist"));
+    const icon = await readIcnsAsImageUri(
+      path.join(p, "Contents/Resources", info.CFBundleIconFile),
+    );
 
-      return {
-        id: info.CFBundleIdentifier,
-        name: info.CFBundleName,
-        icon,
-        exePath: path.resolve(p, "Contents/MacOS", info.CFBundleExecutable),
-      };
-    }),
+    return {
+      id: info.CFBundleIdentifier,
+      name: info.CFBundleName,
+      icon,
+      exePath: path.resolve(p, "Contents/MacOS", info.CFBundleExecutable),
+    };
+  },
 };

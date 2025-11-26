@@ -1,5 +1,3 @@
-import type { Result } from "ts-results";
-
 // Base app info without target metadata (used internally by platform adapters)
 export interface BaseAppInfo {
   id: string;
@@ -9,6 +7,6 @@ export interface BaseAppInfo {
 }
 
 export interface AppReader {
-  readAll(): Promise<Result<BaseAppInfo[], Error>>;
-  readByPath(p: string): Promise<Result<BaseAppInfo, Error>>;
+  readAll(): Promise<BaseAppInfo[]>;
+  readByPath(p: string): Promise<BaseAppInfo>;
 }

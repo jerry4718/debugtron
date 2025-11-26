@@ -9,7 +9,6 @@ import {
   type RegistryValue,
   RegistryValueType,
 } from "registry-js";
-import { Result } from "ts-results";
 
 import type { AppReader, BaseAppInfo } from "./utils";
 
@@ -115,48 +114,47 @@ async function findExeFile(dir: string) {
 }
 
 export const adapter: AppReader = {
-  readAll: () =>
-    Result.wrapAsync(async () => {
-      const enumRegeditItems = (key: HKEY, subkey: string) => {
-        return enumerateKeys(key, subkey).map((k) => enumerateValues(key, subkey + "\\" + k));
-      };
+  readAll: async () => {
+    const enumRegeditItems = (key: HKEY, subkey: string) => {
+      return enumerateKeys(key, subkey).map((k) => enumerateValues(key, subkey + "\\" + k));
+    };
 
-      const items = [
-        ...enumRegeditItems(
-          HKEY.HKEY_LOCAL_MACHINE,
-          "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-        ),
-        ...enumRegeditItems(
-          HKEY.HKEY_LOCAL_MACHINE,
-          "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-        ),
-        ...enumRegeditItems(
-          HKEY.HKEY_CURRENT_USER,
-          "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-        ),
-      ];
+    const items = [
+      ...enumRegeditItems(
+        HKEY.HKEY_LOCAL_MACHINE,
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+      ),
+      ...enumRegeditItems(
+        HKEY.HKEY_LOCAL_MACHINE,
+        "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+      ),
+      ...enumRegeditItems(
+        HKEY.HKEY_CURRENT_USER,
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+      ),
+    ];
 
-      const results = await Promise.all(
-        items.map((itemValues) => Result.wrapAsync(async () => getAppInfoFromRegeditItemValues(itemValues))),
-      );
+    const results = await Promise.allSettled(
+      items.map((itemValues) => getAppInfoFromRegeditItemValues(itemValues)),
+    );
 
-      const apps = results.flatMap((app) => (app.ok ? [app.unwrap()] : []));
+    const apps = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : [],
+    );
 
-      return apps;
-    }),
+    return apps;
+  },
 
-  readByPath: (p: string) =>
-    // eslint-disable-next-line @typescript-eslint/require-await
-    Result.wrapAsync(async () => {
-      if (path.extname(p).toLowerCase() === ".exe") {
-        throw new Error("should be suffixed with exe");
-      }
+  readByPath: (p: string) => {
+    if (path.extname(p).toLowerCase() === ".exe") {
+      return Promise.reject(new Error("should be suffixed with exe"));
+    }
 
-      return {
-        id: p,
-        name: path.basename(p, ".exe"),
-        icon: "",
-        exePath: p,
-      };
-    }),
+    return Promise.resolve({
+      id: p,
+      name: path.basename(p, ".exe"),
+      icon: "",
+      exePath: p,
+    });
+  },
 };

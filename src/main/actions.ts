@@ -29,13 +29,15 @@ export const init: ThunkActionCreator = () => async (dispatch, getState) => {
     // Discover apps for this target
     const target = targetRegistry.getById(targetInfo.id);
     if (target) {
-      const appsResult = await target.discoverApps();
-      if (appsResult.ok) {
+      try {
+        const apps = await target.discoverApps();
         dispatch(targetSlice.actions.appsUpdated({
           targetId: target.id,
-          apps: appsResult.val,
+          apps,
         }));
         dispatch(targetSlice.actions.discoveryCompleted(target.id));
+      } catch (error) {
+        console.error(`Failed to discover apps for ${target.id}:`, error);
       }
     }
   }
@@ -88,13 +90,7 @@ export const debug: ThunkActionCreator<{ targetId: string; app: AppInfo }>
       }
 
       // Launch the app using the target adapter
-      const connectionResult = await target.launch(app, {});
-
-      if (!connectionResult.ok) {
-        throw connectionResult.val;
-      }
-
-      const connection = connectionResult.val;
+      const connection = await target.launch(app, {});
       const sessionId = connection.connectionId;
 
       // Determine connection type
@@ -160,13 +156,7 @@ export const debugPath: ThunkActionCreator<string> = () => async () => {
 export const addRemoteDevice: ThunkActionCreator<RemoteDeviceOptions>
   = (options) => async (dispatch) => {
     try {
-      const targetResult = await targetRegistry.addRemoteDevice(options);
-
-      if (!targetResult.ok) {
-        throw targetResult.val;
-      }
-
-      const target = targetResult.val;
+      const target = await targetRegistry.addRemoteDevice(options);
 
       // Register target in Redux store
       dispatch(
@@ -180,13 +170,15 @@ export const addRemoteDevice: ThunkActionCreator<RemoteDeviceOptions>
       );
 
       // Discover apps from the new target
-      const appsResult = await target.discoverApps();
-      if (appsResult.ok) {
+      try {
+        const apps = await target.discoverApps();
         dispatch(targetSlice.actions.appsUpdated({
           targetId: target.id,
-          apps: appsResult.val,
+          apps,
         }));
         dispatch(targetSlice.actions.discoveryCompleted(target.id));
+      } catch (error) {
+        console.error(`Failed to discover apps for ${target.id}:`, error);
       }
 
       void dialog.showMessageBox({
@@ -221,14 +213,12 @@ export const refreshDeviceApps: ThunkActionCreator<string> = (targetId) => async
     }
 
     // Discover apps from the target
-    const appsResult = await target.discoverApps();
-    if (appsResult.ok) {
-      dispatch(targetSlice.actions.appsUpdated({
-        targetId,
-        apps: appsResult.val,
-      }));
-      dispatch(targetSlice.actions.discoveryCompleted(targetId));
-    }
+    const apps = await target.discoverApps();
+    dispatch(targetSlice.actions.appsUpdated({
+      targetId,
+      apps,
+    }));
+    dispatch(targetSlice.actions.discoveryCompleted(targetId));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     dialog.showErrorBox("Refresh Device Error", errorMessage);
