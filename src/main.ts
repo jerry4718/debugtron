@@ -6,7 +6,7 @@ const __dirname = path.dirname(__filename);
 
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, nativeImage, shell } from "electron";
 
-import type { AppInfo } from "./reducers/app";
+import type { AppInfo } from "./reducers/target";
 
 import { addRemoteDevice, debug, debugPath, init, refreshDeviceApps, removeDevice } from "./main/actions";
 import { store } from "./main/store";
@@ -101,10 +101,10 @@ if (!gotTheLock) {
       );
     }
 
-    ipcMain.on("debug", (e, appInfo: AppInfo) => {
+    ipcMain.on("debug", (e, payload: { targetId: string; app: AppInfo }) => {
       store.dispatch(
         // @ts-expect-error - Redux thunk action dispatch
-        debug(appInfo),
+        debug(payload),
       );
     });
     ipcMain.on("debug-path", (_, path: string) => {

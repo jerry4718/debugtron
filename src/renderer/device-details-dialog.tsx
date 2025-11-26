@@ -2,7 +2,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { type FC } from "react";
 import { useSelector } from "react-redux";
 
-import { appSlice } from "../reducers/app";
 import { targetSlice } from "../reducers/target";
 import { cn } from "./lib/utils";
 
@@ -22,7 +21,6 @@ export const DeviceDetailsDialog: FC<DeviceDetailsDialogProps> = ({
   onRefresh,
 }) => {
   const targetStore = useSelector(targetSlice.selectSlice);
-  const appStore = useSelector(appSlice.selectSlice);
 
   const device = deviceId ? targetStore[deviceId] : undefined;
 
@@ -30,9 +28,7 @@ export const DeviceDetailsDialog: FC<DeviceDetailsDialogProps> = ({
     return null;
   }
 
-  const deviceApps = Object.values(appStore).filter(
-    (app) => app.targetId === deviceId,
-  );
+  const deviceApps = Object.values(device.apps);
 
   const isLocal = device.type === "local";
 

@@ -1,7 +1,7 @@
 import type { ChildProcess } from "child_process";
 import type { Result } from "ts-results";
 
-import type { AppInfo } from "../../reducers/app";
+import type { AppInfo } from "../../reducers/target";
 
 export type TargetType = "local" | "remote";
 

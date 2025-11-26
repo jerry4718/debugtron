@@ -2,18 +2,16 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { type FC, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
-import { appSlice } from "../reducers/app";
-import { sessionSlice } from "../reducers/session";
 import { targetSlice } from "../reducers/target";
+import { sessionSlice } from "../reducers/session";
 import { cn } from "./lib/utils";
 
 import { Xterm } from "./xterm";
 
 export const Session: FC = () => {
   const [activeId, setActiveId] = useState("");
-  const appStore = useSelector(appSlice.selectSlice);
-  const sessionStore = useSelector(sessionSlice.selectSlice);
   const targetStore = useSelector(targetSlice.selectSlice);
+  const sessionStore = useSelector(sessionSlice.selectSlice);
 
   useEffect(() => {
     const sessionIds = Object.keys(sessionStore);
@@ -26,13 +24,13 @@ export const Session: FC = () => {
 
   return (
     <Tabs.Root value={activeId} onValueChange={setActiveId} className="flex flex-col h-full">
-      <Tabs.List className="flex border-b border-border bg-background px-2 gap-1 flex-shrink-0">
+      <Tabs.List className="flex border-b border-border bg-background px-2 gap-1 shrink-0">
         {Object.entries(sessionStore).map(([id, session]) => {
-          const appInfo = appStore[session.appId];
-          const targetInfo = targetStore[session.targetId];
+          const target = targetStore[session.targetId];
+          const appInfo = target?.apps[session.appId];
 
           const tabTitle = appInfo
-            ? `${appInfo.name} (${targetInfo?.name ?? "Unknown"})`
+            ? `${appInfo.name} (${target.name})`
             : "Unknown App";
 
           return (
@@ -52,7 +50,7 @@ export const Session: FC = () => {
       </Tabs.List>
 
       {Object.entries(sessionStore).map(([id, session]) => {
-        const targetInfo = targetStore[session.targetId];
+        const target = targetStore[session.targetId];
 
         return (
           <Tabs.Content
@@ -61,7 +59,7 @@ export const Session: FC = () => {
             className="flex-1 flex flex-col overflow-hidden"
           >
             {/* Connection Info */}
-            {targetInfo && (
+            {target && (
               <div
                 className={cn(
                   "mx-4 mt-2.5 mb-2 p-3 rounded border",
@@ -71,7 +69,7 @@ export const Session: FC = () => {
                 )}
               >
                 <div className="font-semibold text-sm">
-                  Target: {targetInfo.name} ({session.connection.type})
+                  Target: {target.name} ({session.connection.type})
                 </div>
                 {session.connection.websocketUrl && (
                   <div className="mt-1 text-xs text-muted-foreground font-mono">
@@ -87,7 +85,7 @@ export const Session: FC = () => {
             )}
 
             {/* Top: Process Table */}
-            <div className="h-[40%] min-h-[200px] overflow-auto px-4 border-b border-border flex-shrink-0">
+            <div className="h-[40%] min-h-[200px] overflow-auto px-4 border-b border-border shrink-0">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background border-b border-border">
                   <tr>

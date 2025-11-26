@@ -1,7 +1,6 @@
 import { type FC, useState } from "react";
 import { useSelector } from "react-redux";
 
-import { appSlice } from "../reducers/app";
 import { targetSlice } from "../reducers/target";
 
 import defaultImage from "./images/electron.png";
@@ -15,18 +14,15 @@ export const DevicePanel: FC<DevicePanelProps> = ({
   selectedDeviceId,
   onDeviceSettings,
 }) => {
-  const appStore = useSelector(appSlice.selectSlice);
   const targetStore = useSelector(targetSlice.selectSlice);
   const [input, setInput] = useState("");
 
-  const device = selectedDeviceId ? targetStore[selectedDeviceId] : undefined;
+  const target = selectedDeviceId ? targetStore[selectedDeviceId] : undefined;
 
-  // Filter apps for the selected device
-  const deviceApps = Object.values(appStore).filter(
-    (app) => app.targetId === selectedDeviceId,
-  );
+  // Get apps from the target
+  const deviceApps = target ? Object.values(target.apps) : [];
 
-  if (!device) {
+  if (!target) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground text-base">
         Select a device to view apps
@@ -46,11 +42,11 @@ export const DevicePanel: FC<DevicePanelProps> = ({
       >
         <div className="flex items-center gap-3">
           <span className="text-xl">
-            {device.type === "local" ? "💻" : "🌐"}
+            {target.type === "local" ? "💻" : "🌐"}
           </span>
           <div>
             <div className="text-base font-semibold">
-              {device.name}
+              {target.name}
             </div>
             <div className="text-xs text-muted-foreground">
               {deviceApps.length} app{deviceApps.length !== 1 ? "s" : ""} found
@@ -93,7 +89,9 @@ export const DevicePanel: FC<DevicePanelProps> = ({
                   key={app.id}
                   className="p-3 border border-border rounded hover:bg-accent/50 transition-colors cursor-pointer flex items-center gap-3"
                   onClick={() => {
-                    window.debugtronAPI.debug(app);
+                    if (selectedDeviceId) {
+                      window.debugtronAPI.debug({ targetId: selectedDeviceId, app });
+                    }
                   }}
                 >
                   <img
@@ -130,7 +128,7 @@ export const DevicePanel: FC<DevicePanelProps> = ({
       </div>
 
       {/* Custom Path Input (for local devices) */}
-      {device.type === "local" && (
+      {target.type === "local" && (
         <div
           className="p-4 border-t border-border bg-background"
           style={{

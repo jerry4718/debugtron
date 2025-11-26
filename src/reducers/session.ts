@@ -10,8 +10,8 @@ export interface PageInfo {
 }
 
 export interface SessionInfo {
-  appId: string;
-  targetId: string; // New: which target this session belongs to
+  targetId: string; // Which target this session belongs to
+  appId: string; // App ID within the target
   page: Record<string, PageInfo>;
   log: string;
 
@@ -39,8 +39,8 @@ export const sessionSlice = createSlice({
         payload: { sessionId, ...rest },
       }: PayloadAction<{
         sessionId: string;
-        appId: string;
         targetId: string;
+        appId: string;
         connection: {
           type: "local-process" | "remote-adb" | "remote-websocket";
           nodePort?: number;

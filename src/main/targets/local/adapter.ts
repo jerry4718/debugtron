@@ -5,7 +5,7 @@ import getPort from "get-port";
 import { Result } from "ts-results";
 import { v4 } from "uuid";
 
-import type { AppInfo } from "../../../reducers/app";
+import type { AppInfo } from "../../../reducers/target";
 import type { DebugConnection, LaunchOptions, TargetAdapter } from "../types";
 
 import { importByPlatform } from "./platforms";
@@ -44,12 +44,9 @@ export class LocalTargetAdapter implements TargetAdapter {
 
       const apps = result.val;
 
-      // Add target metadata to each app
+      // Return apps with metadata (device context is added by caller)
       return apps.map((app) => ({
         ...app,
-        id: `${this.id}:${app.id}`,
-        targetId: this.id,
-        targetType: "local" as const,
         metadata: {
           platform: process.platform,
         },

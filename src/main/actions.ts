@@ -2,9 +2,8 @@ import type { Action, ThunkDispatch } from "@reduxjs/toolkit";
 import { dialog } from "electron";
 import { chunk } from "lodash-es";
 
-import { type AppInfo, appSlice } from "../reducers/app";
+import { type AppInfo, targetSlice } from "../reducers/target";
 import { type PageInfo, sessionSlice } from "../reducers/session";
-import { targetSlice } from "../reducers/target";
 
 import type { State } from "./store";
 import type { RemoteDeviceOptions } from "./targets/types";
@@ -22,23 +21,24 @@ export const init: ThunkActionCreator = () => async (dispatch, getState) => {
   // Initialize local targets
   await targetRegistry.initializeLocalTargets();
 
-  // Register all targets in Redux store
+  // Register all targets in Redux store and discover their apps
   const targets = targetRegistry.getAllInfo();
-  targets.forEach((target) => {
-    dispatch(targetSlice.actions.registered(target));
-  });
+  for (const targetInfo of targets) {
+    dispatch(targetSlice.actions.registered(targetInfo));
 
-  // Discover apps from all targets
-  const allApps: AppInfo[] = [];
-  for (const target of targetRegistry.getAll()) {
-    const appsResult = await target.discoverApps();
-    if (appsResult.ok) {
-      allApps.push(...appsResult.val);
-      dispatch(targetSlice.actions.discoveryCompleted(target.id));
+    // Discover apps for this target
+    const target = targetRegistry.getById(targetInfo.id);
+    if (target) {
+      const appsResult = await target.discoverApps();
+      if (appsResult.ok) {
+        dispatch(targetSlice.actions.appsUpdated({
+          targetId: target.id,
+          apps: appsResult.val,
+        }));
+        dispatch(targetSlice.actions.discoveryCompleted(target.id));
+      }
     }
   }
-
-  dispatch(appSlice.actions.found(allApps));
 
   // Timer for polling debug endpoints
   setInterval(() => {
@@ -78,79 +78,80 @@ export const init: ThunkActionCreator = () => async (dispatch, getState) => {
   }, 3000);
 };
 
-export const debug: ThunkActionCreator<AppInfo> = (app) => async (dispatch) => {
-  try {
-    // Get the target adapter for this app
-    const target = targetRegistry.getById(app.targetId);
-    if (!target) {
-      throw new Error(`Target ${app.targetId} not found`);
+export const debug: ThunkActionCreator<{ targetId: string; app: AppInfo }>
+  = ({ targetId, app }) => async (dispatch) => {
+    try {
+      // Get the target adapter
+      const target = targetRegistry.getById(targetId);
+      if (!target) {
+        throw new Error(`Target ${targetId} not found`);
+      }
+
+      // Launch the app using the target adapter
+      const connectionResult = await target.launch(app, {});
+
+      if (!connectionResult.ok) {
+        throw connectionResult.val;
+      }
+
+      const connection = connectionResult.val;
+      const sessionId = connection.connectionId;
+
+      // Determine connection type
+      let connectionType: "local-process" | "remote-adb" | "remote-websocket";
+      if (target.type === "local") {
+        connectionType = "local-process";
+      } else if (target.id.startsWith("remote-adb")) {
+        connectionType = "remote-adb";
+      } else {
+        connectionType = "remote-websocket";
+      }
+
+      // Add session to Redux store
+      dispatch(
+        sessionSlice.actions.added({
+          sessionId,
+          targetId,
+          appId: app.id,
+          connection: {
+            type: connectionType,
+            nodePort: connection.debugPorts.node,
+            windowPort: connection.debugPorts.renderer,
+            websocketUrl: connection.debugPorts.websocket,
+          },
+        }),
+      );
+
+      // Handle local process events
+      if (connection.processHandle) {
+        const sp = connection.processHandle;
+
+        sp.on("error", (err: Error) => {
+          dialog.showErrorBox(`Error: ${app.name}`, err.message);
+        });
+
+        sp.on("close", () => {
+          dispatch(sessionSlice.actions.removed(sessionId));
+          void connection.cleanup();
+        });
+
+        const handleStdout = (chunk: Buffer) => {
+          dispatch(
+            sessionSlice.actions.logAppended({
+              sessionId,
+              content: chunk.toString(),
+            }),
+          );
+        };
+
+        sp.stdout?.on("data", handleStdout);
+        sp.stderr?.on("data", handleStdout);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      dialog.showErrorBox(`Error: ${app.name}`, errorMessage);
     }
-
-    // Launch the app using the target adapter
-    const connectionResult = await target.launch(app, {});
-
-    if (!connectionResult.ok) {
-      throw connectionResult.val;
-    }
-
-    const connection = connectionResult.val;
-    const sessionId = connection.connectionId;
-
-    // Determine connection type
-    let connectionType: "local-process" | "remote-adb" | "remote-websocket";
-    if (target.type === "local") {
-      connectionType = "local-process";
-    } else if (target.id.startsWith("remote-adb")) {
-      connectionType = "remote-adb";
-    } else {
-      connectionType = "remote-websocket";
-    }
-
-    // Add session to Redux store
-    dispatch(
-      sessionSlice.actions.added({
-        sessionId,
-        appId: app.id,
-        targetId: app.targetId,
-        connection: {
-          type: connectionType,
-          nodePort: connection.debugPorts.node,
-          windowPort: connection.debugPorts.renderer,
-          websocketUrl: connection.debugPorts.websocket,
-        },
-      }),
-    );
-
-    // Handle local process events
-    if (connection.processHandle) {
-      const sp = connection.processHandle;
-
-      sp.on("error", (err: Error) => {
-        dialog.showErrorBox(`Error: ${app.name}`, err.message);
-      });
-
-      sp.on("close", () => {
-        dispatch(sessionSlice.actions.removed(sessionId));
-        void connection.cleanup();
-      });
-
-      const handleStdout = (chunk: Buffer) => {
-        dispatch(
-          sessionSlice.actions.logAppended({
-            sessionId,
-            content: chunk.toString(),
-          }),
-        );
-      };
-
-      sp.stdout?.on("data", handleStdout);
-      sp.stderr?.on("data", handleStdout);
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    dialog.showErrorBox(`Error: ${app.name}`, errorMessage);
-  }
-};
+  };
 
 export const debugPath: ThunkActionCreator<string> = () => async () => {
   // TODO:
@@ -181,9 +182,10 @@ export const addRemoteDevice: ThunkActionCreator<RemoteDeviceOptions>
       // Discover apps from the new target
       const appsResult = await target.discoverApps();
       if (appsResult.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const existingApps = Object.values((dispatch as any).getState?.()?.app ?? {});
-        dispatch(appSlice.actions.found([...(existingApps as AppInfo[]), ...appsResult.val]));
+        dispatch(targetSlice.actions.appsUpdated({
+          targetId: target.id,
+          apps: appsResult.val,
+        }));
         dispatch(targetSlice.actions.discoveryCompleted(target.id));
       }
 
@@ -200,17 +202,11 @@ export const addRemoteDevice: ThunkActionCreator<RemoteDeviceOptions>
 
 export const removeDevice: ThunkActionCreator<string> = (targetId) => (dispatch) => {
   try {
-    // Remove device from registry
+    // Remove target from registry
     targetRegistry.unregister(targetId);
 
-    // Remove from Redux store
+    // Remove from Redux store (apps will be removed automatically as they're nested)
     dispatch(targetSlice.actions.unregistered(targetId));
-
-    // Remove all apps from this device
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingApps = Object.values((dispatch as any).getState?.()?.app ?? {});
-    const filteredApps = (existingApps as AppInfo[]).filter((app) => app.targetId !== targetId);
-    dispatch(appSlice.actions.found(filteredApps));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     dialog.showErrorBox("Remove Device Error", errorMessage);
@@ -227,13 +223,10 @@ export const refreshDeviceApps: ThunkActionCreator<string> = (targetId) => async
     // Discover apps from the target
     const appsResult = await target.discoverApps();
     if (appsResult.ok) {
-      // Get existing apps from other devices
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const existingApps = Object.values((dispatch as any).getState?.()?.app ?? {});
-      const otherDeviceApps = (existingApps as AppInfo[]).filter((app) => app.targetId !== targetId);
-
-      // Merge with new apps from this device
-      dispatch(appSlice.actions.found([...otherDeviceApps, ...appsResult.val]));
+      dispatch(targetSlice.actions.appsUpdated({
+        targetId,
+        apps: appsResult.val,
+      }));
       dispatch(targetSlice.actions.discoveryCompleted(targetId));
     }
   } catch (error) {

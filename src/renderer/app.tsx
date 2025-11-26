@@ -1,5 +1,5 @@
-import { sessionSlice } from "../reducers/session";
 import { targetSlice } from "../reducers/target";
+import { sessionSlice } from "../reducers/session";
 
 import "./app.css";
 import * as Dialog from "@radix-ui/react-dialog";

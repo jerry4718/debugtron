@@ -4,7 +4,7 @@ import { promisify } from "util";
 import { Result } from "ts-results";
 import { v4 } from "uuid";
 
-import type { AppInfo } from "../../../reducers/app";
+import type { AppInfo } from "../../../reducers/target";
 import type { DebugConnection, TargetAdapter } from "../types";
 
 const execAsync = promisify(exec);
@@ -59,7 +59,7 @@ export class AdbTargetAdapter implements TargetAdapter {
         .filter((line) => line.startsWith("package:"))
         .map((line) => line.replace("package:", "").trim());
 
-      // Get app labels for each package
+      // Get app labels for each package (device context is added by caller)
       const apps: AppInfo[] = packageNames.map((packageName) => {
         const label = packageName;
         // TODO: Try to get app label from package manager
@@ -67,11 +67,9 @@ export class AdbTargetAdapter implements TargetAdapter {
         // For now, we just use the package name
 
         return {
-          id: `${this.id}:${packageName}`,
+          id: packageName,
           name: label,
           icon: "", // TODO: Extract app icon from APK
-          targetId: this.id,
-          targetType: "remote" as const,
           metadata: {
             packageName,
             deviceInfo: `ADB ${this.address}:${this.port}`,
@@ -88,7 +86,7 @@ export class AdbTargetAdapter implements TargetAdapter {
   ): Promise<Result<DebugConnection, Error>> {
     return Result.wrapAsync(async () => {
       // Extract package name from app metadata or ID
-      const packageName = app.metadata?.packageName ?? app.id.replace(`${this.id}:`, "");
+      const packageName = app.metadata?.packageName ?? app.id;
 
       // Get the main activity for the package
       const activityOutput = await this.execAdb([
